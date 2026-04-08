@@ -297,7 +297,7 @@ def get_xpu_available():
 def get_xpu_runtime_version():
     if TORCH_AVAILABLE and hasattr(torch.version, "xpu"):
         return torch.version.xpu
-    return "N/A"
+    return None
 
 
 def get_pkg_version(run_lambda, pkg):
@@ -307,8 +307,8 @@ def get_pkg_version(run_lambda, pkg):
         rc, out, _ = run_lambda("pip show vllm-xpu-kernels")
         if rc == 0:
             match = re.search(r"Version: (.*)", out)
-            return match.group(1).strip() if match else "N/A"
-        return "N/A"
+            return match.group(1).strip() if match else None
+        return None
 
     pkg_map = {
         "igc": ["intel-igc-core", "libigc2", "libigc1"],
@@ -320,7 +320,7 @@ def get_pkg_version(run_lambda, pkg):
 
     pkg_candidates = pkg_map.get(pkg, [])
     if not pkg_candidates:
-        return "N/A"
+        return None
 
     mgr_name = None
     for mgr in ["dpkg", "dnf", "yum", "zypper"]:
@@ -330,7 +330,7 @@ def get_pkg_version(run_lambda, pkg):
             break
 
     if not mgr_name:
-        return "N/A"
+        return None
 
     ret = ""
     index = -1
@@ -357,13 +357,13 @@ def get_pkg_version(run_lambda, pkg):
                 break
 
     if not ret or index == -1:
-        return "N/A"
+        return None
 
     lst = re.sub(" +", " ", ret).strip().split(" ")
     if len(lst) > index:
         return lst[index]
 
-    return "N/A"
+    return None
 
 
 def get_intel_graphics_compiler_version(run_lambda):
@@ -958,8 +958,8 @@ def pretty_str(envinfo):
     if not xpu_available and all_dynamic_xpu_fields_missing:
         for field in all_xpu_fields:
             mutable_dict[field] = "No XPU"
-        if envinfo.xpu_runtime_version is None or envinfo.xpu_runtime_version == "N/A":
-            mutable_dict["xpu_runtime_version"] = "N/A"
+    if envinfo.xpu_runtime_version is None or envinfo.xpu_runtime_version == "N/A":
+        mutable_dict["xpu_runtime_version"] = "N/A"
 
     # If intel_gpu_models is multiline, start on the next line
     mutable_dict["intel_gpu_models"] = maybe_start_on_next_line(
