@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 
+import os
 from typing import Any
 
 import torch
@@ -113,17 +114,10 @@ def maybe_make_prepare_finalize(
 
         # For DP/TP case, fall back to naive P/F.
         if moe.moe_parallel_config.dp_size > 1:
-            is_xpu_restricted_visibility = (
+            if (
                 current_platform.is_xpu()
-                and current_platform.device_count() < moe.moe_parallel_config.dp_size
-            )
-            if is_xpu_restricted_visibility:
-                logger.info_once(
-                    "XPU: Visible device count (%d) < DP size (%d). "
-                    "Using no-DP/EP MoE to avoid cross-rank communication.",
-                    current_platform.device_count(),
-                    moe.moe_parallel_config.dp_size,
-                )
+                and os.environ.get("VLLM_EXTERNAL_LB_FORCE_NO_DP_EP", "0") == "1"
+            ):
                 return make_moe_prepare_and_finalize_no_dp_ep(use_monolithic)
 
             logger.info_once(
