@@ -130,8 +130,6 @@ def default_server_args():
         "--max-num-seqs",
         "128",
         "--enforce-eager",
-        "--gpu-memory-utilization",
-        "0.8",
     ]
 
 
