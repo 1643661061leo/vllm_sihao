@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 
-import os
 from typing import Any
 
 import torch
@@ -112,14 +111,16 @@ def maybe_make_prepare_finalize(
         if not allow_new_interface:
             return None
 
+        parallel_config = get_current_vllm_config().parallel_config
+        if parallel_config.data_parallel_external_lb:
+            logger.info_once(
+                "External LB mode detected. "
+                "Disabling DP-EP cross-rank token routing to prevent collective "
+                "communication hangs. Falling back to no_dp_ep."
+            )
+            return make_moe_prepare_and_finalize_no_dp_ep(use_monolithic)
         # For DP/TP case, fall back to naive P/F.
         if moe.moe_parallel_config.dp_size > 1:
-            if (
-                current_platform.is_xpu()
-                and os.environ.get("VLLM_EXTERNAL_LB_FORCE_NO_DP_EP", "0") == "1"
-            ):
-                return make_moe_prepare_and_finalize_no_dp_ep(use_monolithic)
-
             logger.info_once(
                 "Detected DP deployment with no --enable-expert-parallel. "
                 "Falling back to AllGather+ReduceScatter dispatch/combine."

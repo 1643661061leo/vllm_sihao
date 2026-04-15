@@ -76,7 +76,6 @@ class ExternalLBServerManager:
                         auto_port=False,
                         env_dict={
                             "VLLM_SERVER_DEV_MODE": "1",
-                            "VLLM_EXTERNAL_LB_FORCE_NO_DP_EP": "1",
                             current_platform.device_control_env_var: ",".join(
                                 str(current_platform.device_id_to_physical_device_id(i))
                                 for i in range(r * TP_SIZE, (r + 1) * TP_SIZE)
